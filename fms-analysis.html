@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI FMS 정밀 분석기 - 경희대학교 스포츠재활센터</title>
+    <!-- 폰트 적용 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/fms-analysis.css">
+</head>
+<body class="fms-page">
+    <header class="header">
+        <div class="logo">
+            <span class="logo-khu">경희대학교</span>
+            <span class="logo-text">스포츠재활센터 AI</span>
+        </div>
+        <nav class="nav">
+            <ul>
+                <li><a href="index.html">홈으로 돌아가기</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="analysis-container">
+        <!-- 2. 동작 선택 및 업로드 -->
+        <section class="upload-section" id="uploadSection">
+            <div class="text-center">
+                <h2>🏃‍♂️ FMS 자세 평가 인공지능 분석기</h2>
+                <p>정확한 평가를 위해 동작의 측면 또는 정면이 잘 보이는 사진을 업로드하세요.</p>
+            </div>
+
+            <div class="user-info-form card" style="max-width: 600px; margin: 0 auto 2rem; border: 1px solid #eee;">
+                <h3 style="margin-bottom: 1rem; color: #8A1538;">📋 분석 설정</h3>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="geminiApiKey" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">🔑 구글 Gemini AI Vision API 키 (선택)</label>
+                    <input type="password" id="geminiApiKey" placeholder="API 키를 입력하면 실제 AI가 사진을 읽고 정밀 판독합니다 (없으면 수동 체크리스트 모드)" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">* 키는 서버로 전송되지 않으며 브라우저에 임시 저장됩니다.</p>
+                </div>
+
+                <label for="fmsTestSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">어떤 동작을 분석할까요?</label>
+                <select id="fmsTestSelect" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    <option value="Deep Squat">Deep Squat (딥 스쿼트)</option>
+                    <option value="Hurdle Step">Hurdle Step (허들 스텝)</option>
+                    <option value="In-Line Lunge">In-Line Lunge (인라인 런지)</option>
+                    <option value="Shoulder Mobility">Shoulder Mobility (어깨 가동성)</option>
+                    <option value="Active Straight-Leg Raise">Active Straight-Leg Raise (능동적 뻗은 다리 올리기)</option>
+                    <option value="Trunk Stability Push-Up">Trunk Stability Push-Up (몸통 안정성 푸시업)</option>
+                    <option value="Rotary Stability">Rotary Stability (회전 안정성)</option>
+                </select>
+            </div>
+            
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-icon">📸</div>
+                <p>여기로 여러 장의 사진을 드래그하거나 클릭하여 파일을 선택하세요</p>
+                <input type="file" id="fileInput" accept="image/*" multiple hidden>
+            </div>
+
+            <div id="previewContainer" class="hidden" style="text-align: center; margin-top: 20px;">
+                <p style="font-weight: 500; margin-bottom: 15px; color: #8A1538;">업로드된 사진 (정면/측면 등 다중 분석)</p>
+                <div id="imageGallery" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px;">
+                    <!-- JS에서 썸네일 이미지들이 동적으로 추가됩니다 -->
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="analyzeFMS()">🤖 AI 정밀 분석 시작하기</button>
+                    <button class="btn btn-outline" onclick="resetAnalyzer()">초기화 및 다시 올리기</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 분석 로딩 -->
+        <section id="loadingSection" class="hidden" style="text-align: center; padding: 50px 0;">
+            <div class="spinner" style="margin: 0 auto;"></div>
+            <h3 style="margin-top: 20px; color: #8A1538;">인공지능이 관절 각도와 축을 정밀 계산 중입니다...</h3>
+        </section>
+
+        <!-- 4. 결과 시각화 리포트 -->
+        <section class="result-section hidden" id="resultSection">
+            <div class="text-center" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 2rem; margin-bottom: 0.5rem;"><span id="resultTestName" style="color: #8A1538;">Deep Squat</span> 정밀 분석 리포트</h2>
+                <p style="color: #666; font-size: 1rem;">세계 최고 권위자들의 다각도 심층 채점 결과입니다.</p>
+            </div>
+
+            <!-- 🧑‍🏫 교수진 개별 채점 패널 -->
+            <div id="professorScoresContainer" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem;">
+                <!-- JS에서 교수별 점수 카드가 동적으로 주입됩니다 -->
+            </div>
+
+            <div class="report-grid">
+                <!-- 왼쪽: 인체 실루엣 시각화 -->
+                <div class="silhouette-container card">
+                    <h3>🔍 문제 발생 관절/부위 시각화</h3>
+                    <div class="human-silhouette" id="humanSilhouette">
+                        <!-- 배경 이미지는 CSS로 처리, 경고 마크는 JS로 절대 좌표 주입 -->
+                        <div class="silhouette-bg"></div>
+                        <!-- 예시: <div class="alert-mark" style="top: 70%; left: 45%;">⚠️</div> -->
+                    </div>
+                </div>
+
+                <!-- 오른쪽: 감점 원인 및 처방 카드 -->
+                <div class="details-container">
+                    <div class="card issue-card">
+                        <h3>📉 감점 요인 (Deduction Reasons)</h3>
+                        <ul id="issueList" class="issue-list">
+                            <!-- JS로 내용 채워짐 -->
+                        </ul>
+                    </div>
+
+                    <div class="card rx-card">
+                        <h3>🩹 맞춤형 교정 운동 (Corrections)</h3>
+                        <ul id="rxList" class="rx-list">
+                            <!-- JS로 내용 채워짐 -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        </section>
+
+        <!-- 5. 옵션 B: 전문가용 수동 체크리스트 모달 (API 연동 불가시 대체) -->
+        <div id="manualChecklistModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <span class="close-modal" onclick="closeManualModal()">&times;</span>
+                <h3 style="color: #8A1538; margin-bottom: 15px; border-bottom: 2px solid #8A1538; padding-bottom: 10px;">📋 FMS 논문 기반 전문가 평가</h3>
+                <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">API 키가 입력되지 않아 전문가 수동 채점 모드(Option B)로 전환됩니다. 업로드하신 사진을 보고 해당하는 항목에 체크해 주세요.</p>
+                
+                <div id="checklistQuestions">
+                    <!-- JS로 선택된 테스트에 따라 문항 렌더링 -->
+                </div>
+
+                <div style="text-align: right; margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="submitManualChecklist()">채점 완료 및 결과 보기</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="scripts/fms-analysis.js"></script>
+</body>
+</html>

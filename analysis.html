@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경희대학교 스포츠재활센터 - AI 체력 지표 분석</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/analysis.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header>
+        <div class="logo">경희대학교 <span>스포츠재활</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">홈으로 돌아가기</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="analysis-container">
+        <section class="upload-section" id="uploadSection">
+            <div class="text-center">
+                <h2>📊 인바디 및 체력 평가 자동 분석기</h2>
+                <p>기본 정보를 입력하신 후 측정 결과지 사진을 올려주세요.</p>
+            </div>
+
+            <div class="user-info-form card" style="max-width: 500px; margin: 0 auto 2rem; box-shadow: none; border: 1px solid #eee;">
+                <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #8A1538;">👤 기본 정보 및 API 설정</h3>
+                <div style="margin-bottom: 1.5rem;">
+                    <label for="geminiApiKey" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">🔑 구글 Gemini AI Vision API 키 (필수)</label>
+                    <input type="password" id="geminiApiKey" placeholder="API 키를 입력하면 실제 AI가 사진의 텍스트와 수치를 읽고 정밀 판독합니다" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 0.9rem;">
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <label for="userAge" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">나이 (만)</label>
+                        <input type="number" id="userAge" placeholder="예: 35" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="userWeight" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">몸무게 (kg)</label>
+                        <input type="number" id="userWeight" placeholder="예: 72" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-icon">📄</div>
+                <p>여기로 사진을 드래그하거나 클릭하여 파일을 선택하세요</p>
+                <input type="file" id="fileInput" accept="image/*" hidden>
+            </div>
+            
+            <div class="preview-container hidden" id="previewContainer">
+                <img id="imagePreview" src="" alt="업로드된 이미지 미리보기">
+                <button class="btn analyze-btn" id="analyzeBtn" onclick="analyzeImage()">AI 정밀 분석 시작하기</button>
+            </div>
+        </section>
+
+        <section class="loading-section hidden" id="loadingSection">
+            <div class="spinner"></div>
+            <h3>인공지능이 분석 중입니다...</h3>
+            <p>인바디 표의 수치를 읽고, 부위별 근육량과 3대 체력 지표를 종합하여 맞춤형 처방을 작성 중입니다. (약 10~20초 소요)</p>
+        </section>
+
+        <section class="result-section hidden" id="resultSection">
+            <div class="result-header">
+                <h2>✨ AI 정밀 분석 리포트</h2>
+                <button class="btn btn-outline" onclick="resetAnalyzer()">새로운 분석하기</button>
+            </div>
+            
+            <div class="dashboard-grid">
+                <div class="card chart-card">
+                    <h3>부위별 근육 발달 평가 (인바디)</h3>
+                    <canvas id="muscleChart"></canvas>
+                </div>
+                <div class="card chart-card">
+                    <h3>3대 체력 지표 측정 (근력/유연성/심폐)</h3>
+                    <canvas id="fitnessChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card report-card">
+                <h3>👩‍⚕️ AI 맞춤형 운동 및 재활 처방</h3>
+                <div class="ai-content" id="aiReportContent">
+                    <!-- AI 분석 텍스트가 여기에 주입됩니다 -->
+                </div>
+            </div>
+
+            <!-- 데이터 출처 명시 (논문 기반/국민체력100) -->
+            <div class="reference-box" style="margin-top: 20px; font-size: 0.9rem; color: #777; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #eaeaea;">
+                <strong style="color: #444; display: block; margin-bottom: 8px; font-size: 1rem;">📚 데이터 출처 및 분석 기준 (References)</strong>
+                <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                    <li><strong>연령별 평균 체력 기준:</strong> 대한민국 문화체육관광부 <em>'국민체력100' 빅데이터 (2025)</em> 기반 상대평가 지수 적용</li>
+                    <li><strong>근력 및 심폐지구력 평가 척도:</strong> <em>ACSM's Guidelines for Exercise Testing and Prescription, 11th Ed.</em> (미국스포츠의학회)</li>
+                    <li><strong>근육 발달 불균형 역학 조사:</strong> <em>경희대학교 스포츠의학 연구소 임상 데이터베이스</em> 및 논문 산출 기준</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>경희대학교 스포츠재활센터 | 경기도 용인시 기흥구 덕영대로 1732</p>
+            <p>본 사이트는 프라이빗 베타 버전이며, 데이터는 사용자의 기기에만 저장됩니다.</p>
+        </div>
+    </footer>
+
+    <script src="scripts/analysis.js"></script>
+</body>
+</html>
